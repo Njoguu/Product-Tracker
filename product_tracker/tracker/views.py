@@ -87,7 +87,7 @@ def start_scraper(request):
         search_text = request.json.get('search_text')
 
         # TODO: Add run scraper separately
-        command = f"python ../scraper/__init__py {url} \"{search_text}\" /results"
+        command = f"python ../web-scraper/__init__py {url} \"{search_text}\" /results"
         subprocess.Popen(command, shell=True)
 
         response = {"mesage": "scraper started successfully"}
@@ -132,7 +132,7 @@ def get_tracked_products(request):
 def update_tracked_products(request):
     if request.method == "POST":
         tracked_products = TrackedProducts.objects.all()
-        url = "https://amazon.ca" #TODO: change url
+        url = "https://www.jumia.co.ke/" 
 
         product_names = []
         for tracked_product in tracked_products:
@@ -141,7 +141,7 @@ def update_tracked_products(request):
                 continue
 
             # TODO: Add run scraper separately
-            command = f"python ../scraper/__init__py {url} \"{name}\" /results"
+            command = f"python ../web-scraper/__init__py {url} \"{name}\" /results"
             subprocess.Popen(command, shell=True)
 
             product_names.append(name)
