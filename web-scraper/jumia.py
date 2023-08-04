@@ -1,39 +1,54 @@
-from asyncio import gather
-
-# TODO: remove
-async def get_stock(product_div):
-    elements = await product_div.query_selector_all('.a-size-base')
-    filtered_elements = [element for element in elements if 'stock' in await element.inner_text()]
-    return filtered_elements
+import requests
+from bs4 import BeautifulSoup
+from scraper import URLS, post_results, JUMIA
 
 
-async def get_product(product_div):
-    # Query for all elements at once
-    image_element_future = product_div.query_selector('img.img')
-    name_element_future = product_div.query_selector(
-        'h3.name')
-    price_element_future = product_div.query_selector('div.prc')
-    url_element_future = product_div.query_selector(
-        'a.core.href')
+async def scrape_product_data(url, product):
+    name = product.replace(" ", "+")
+    # Send an HTTP GET request to the website
+    URL = url+f"/catalog/?q={name}"
 
-    # Await all queries at once
-    image_element, name_element, price_element, url_element = await gather(
-        image_element_future,
-        name_element_future,
-        price_element_future,
-        url_element_future,
-        # get_stock(product_div)
-    )
+    response = requests.get(URL)
 
-    # Fetch all attributes and text at once
-    image_url = await image_element.get_attribute('src') if image_element else None
-    product_name = await name_element.inner_text() if name_element else None
-    try:
-        print((await price_element.inner_text()).replace("KSh", "").replace(",", "").strip())
-        product_price = float((await price_element.inner_text()).replace("KSh", "").replace(",", "").strip()) if price_element else None
-    except:
-        product_price = None
-    product_url = "/".join((await url_element.get_attribute('href')).split("/")[:4]) if url_element else None
-    # stock = stock_element[0] if len(stock_element) > 0 else None
+    # Check if the request was successful
+    if response.status_code != 200:
+        print(f"Error: Failed to fetch the website. Status code: {response.status_code}")
+        return None
 
-    return {"img": image_url, "name": product_name, "price": product_price, "url": product_url}
+    # Parse the HTML content using BeautifulSoup
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    # Find all product elements on the page (customize this based on the website's structure)
+    product_elements = soup.find_all(URLS[JUMIA]["product_selector"]["element"], class_=URLS[JUMIA]["product_selector"]["class"])
+
+    # List to store scraped product data
+    products_data = []
+
+    # Loop through each product element and extract product details
+    for product_element in product_elements:
+        # Extract product details such as name, price, image URL, etc.
+        product_name = product_element.find('h3', class_='name').text.strip()
+        product_price_raw = product_element.find('div', class_='prc').text.strip()
+        product_image_url = product_element.find('img', class_="img")['data-src']
+        product_url = product_element.find('a', class_="core")['href']
+
+        if '-' in product_price_raw:
+            product_price_raw= product_price_raw.split('-')[0].strip()
+        product_price = product_price_raw.replace("KSh", "").replace(",", "").strip() if product_price_raw else None
+
+        # Create a dictionary with the extracted data and add it to the list
+        product_data = {
+            'name': product_name,
+            'price': product_price,
+            'img': product_image_url,
+            'url': url+product_url
+        }
+        products_data.append(product_data)
+
+    return products_data
+
+if __name__ == "__main__":
+    search_text = "radeon r9"
+    scraped_data = scrape_product_data(JUMIA, search_text)
+    post_results(scraped_data, "/results/", search_text, JUMIA)
+    
