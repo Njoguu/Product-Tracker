@@ -18,7 +18,7 @@ class ProductResult(models.Model):
 
 class TrackedProducts(models.Model):
     id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=1000)
+    name = models.CharField(max_length=1000, unique=True)
     created_at = models.DateTimeField(default=now)
     tracked = models.BooleanField(default=True)
 

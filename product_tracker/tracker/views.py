@@ -1,18 +1,22 @@
 from django.shortcuts import render
+from django.db import IntegrityError
 from django.http import HttpResponse, JsonResponse
 from .models  import *
 import json
 import subprocess
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 def index(request):
     return HttpResponse("Hello, world. You're at the index page")
 
+@csrf_exempt
 def results(request):
     if request.method == "POST":
-        results = request.json.get('data')
-        search_text = request.json.get('search_text')
-        source = request.json.get('source')
+        data = json.loads(request.body)
+        results = data.get('data')
+        search_text = data.get('search_text')
+        source = data.get('source')
 
         for result in results:
             ProductResult.objects.create(
@@ -28,8 +32,11 @@ def results(request):
         return JsonResponse(response, status=200)
     
     elif request.method == "GET":
-        search_text = request.GET.get('search_text')
-        results = ProductResult.objects.all().filter(search_text=search_text).order_by('-created_at')
+        search_text = request.GET.get('search_text', '')
+        results = ProductResult.objects.filter(search_text=search_text).order_by('-created_at')
+
+        if not results.exists():
+            return JsonResponse({'messagae': "No results found for the specified search_text"}, status=404) 
 
         product_dict = {}
         for result in results:
@@ -60,9 +67,9 @@ def results(request):
 def get_unique_search_texts(request):
     if request.method == "GET":
         unique_search_texts = ProductResult.objects.values("search_text").distinct()
-        unique_search_texts =[text[0] for text in unique_search_texts]
+        unique_search_texts =[text['search_text'] for text in unique_search_texts]
 
-        return JsonResponse(unique_search_texts, safe=False)
+        return JsonResponse({'search_text': unique_search_texts}, safe=False)
         
 def get_results(request):
     results = ProductResult.objects.all()
@@ -81,39 +88,49 @@ def get_results(request):
 
     return JsonResponse(product_results, safe=False)
 
+@csrf_exempt
 def start_scraper(request):
     if request.method == "POST":
-        url = request.json.get('url')
-        search_text = request.json.get('search_text')
+        data = json.loads(request.body)
+        url = data.get('url')
+        search_text = data.get('search_text')
 
         # TODO: Add run scraper separately
-        command = f"python ../web-scraper/__init__py {url} \"{search_text}\" /results"
+        command = f"python ../web-scraper/__init__.py {url} \"{search_text}\" /results"
         subprocess.Popen(command, shell=True)
 
         response = {"mesage": "scraper started successfully"}
-        return json.dumps(response), 200
+        return JsonResponse(response, status=200)
     
+@csrf_exempt    
 def add_tracked_product(request):
     if request.method == "POST":
-        name = request.json.get("name")
-        tracked_product = TrackedProducts(name=name)
-        TrackedProducts.objects.create(tracked_product)
+        data = json.loads(request.body)
+        name = data.get("name")
+        
+        try:
+            tracked_product = TrackedProducts(name=name)
+            tracked_product.save()
+            response = {"message": "Tracked product added successfully", "id": tracked_product.id}
+            return JsonResponse(response, status=201)
+        
+        except IntegrityError:
+            response = {"error": "Product with this name already exists"}
+            return JsonResponse(response, status=400)
 
-        response = {"message": "TRacked product added successfully", "id": tracked_product.id}
-
-        return json.dumps(response)
-    
+@csrf_exempt    
 def toggle_tracked_product(request, product_id):
     if request.method == "PUT":
-        tracked_product = TrackedProducts.objects.query(product_id)
+        tracked_product = TrackedProducts.objects.get(id=product_id)
         if tracked_product is None:
             response = {"message", "Tracked product not found"}
-            return json.dumps(response), 404
+            return JsonResponse(response, status=404)
     
         tracked_product.tracked = not tracked_product.tracked
+        tracked_product.save()
 
         response = {"message": "Tracked product toggled successfully"}
-        return json.dumps(response), 200
+        return JsonResponse(response, status=204)
     
 def get_tracked_products(request):
     tracked_products = TrackedProducts.objects.all()
@@ -129,6 +146,7 @@ def get_tracked_products(request):
 
     return JsonResponse(results, safe=False)
 
+@csrf_exempt
 def update_tracked_products(request):
     if request.method == "POST":
         tracked_products = TrackedProducts.objects.all()
@@ -137,16 +155,16 @@ def update_tracked_products(request):
         product_names = []
         for tracked_product in tracked_products:
             name = tracked_product.name
-            if not tracked_product.tracked:
+            if not tracked_product.tracked: 
                 continue
 
             # TODO: Add run scraper separately
-            command = f"python ../web-scraper/__init__py {url} \"{name}\" /results"
+            command = f"python ../web-scraper/__init__.py {url} \"{name}\" /results"
             subprocess.Popen(command, shell=True)
 
             product_names.append(name)
         
         response = {"message":"Scrapers started successfully", "products":product_names}
 
-        return json.dumps(response), 200
+        return JsonResponse(response, status=200)
     
