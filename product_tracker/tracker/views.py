@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 def index(request):
-    return HttpResponse("Hello, world. You're at the index page")
+    return render(request,"index.html")
 
 @csrf_exempt
 def results(request):
@@ -144,7 +144,7 @@ def get_tracked_products(request):
             "tracked": product.tracked
         })
 
-    return JsonResponse(results, safe=False)
+    return JsonResponse({'products': results}, safe=False)
 
 @csrf_exempt
 def update_tracked_products(request):
