@@ -1,6 +1,7 @@
+import asyncio
 import requests
 from bs4 import BeautifulSoup
-from scraper import URLS, post_results, JUMIA
+from scraper import URLS, JUMIA, post_results
 
 
 async def scrape_product_data(url, product):
@@ -30,7 +31,8 @@ async def scrape_product_data(url, product):
         product_name = product_element.find('h3', class_='name').text.strip()
         product_price_raw = product_element.find('div', class_='prc').text.strip()
         product_image_url = product_element.find('img', class_="img")['data-src']
-        product_url = product_element.find('a', class_="core")['href']
+        product_url_element = product_element.find('a', class_="core")
+        product_url = product_url_element['href'] if product_url_element else None
 
         if '-' in product_price_raw:
             product_price_raw= product_price_raw.split('-')[0].strip()
@@ -47,8 +49,11 @@ async def scrape_product_data(url, product):
 
     return products_data
 
+async def main(url, search_text):
+    results = await scrape_product_data(JUMIA, product=search_text)
+    post_results(results, JUMIA, search_text)
+    
+
 if __name__ == "__main__":
-    search_text = "radeon r9"
-    scraped_data = scrape_product_data(JUMIA, search_text)
-    post_results(scraped_data, "/results/", search_text, JUMIA)
+    asyncio.run(main(JUMIA, "ryzen 9 3950x"))
     

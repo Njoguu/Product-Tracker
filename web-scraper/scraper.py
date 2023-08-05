@@ -23,13 +23,13 @@ def save_results(results):
         json.dump(data, f)
 
 
-def post_results(results, endpoint, search_text, source):
+def post_results(results, source_url, search_text):
     headers = {
         "Content-Type": "application/json"
     }
-    data = {"data": results, "search_text": search_text, "source": source}
+    data = {"data": results, "search_text": search_text, "source": source_url}
 
-    print("Sending request to", endpoint)
-    response = post("http://localhost:8000" + endpoint,
+    print("Sending request to", "/results/")
+    response = post("http://localhost:8000" + "/results/",
                     headers=headers, json=data)
     print("Status code:", response.status_code)
