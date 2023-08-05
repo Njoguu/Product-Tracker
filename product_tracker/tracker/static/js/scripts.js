@@ -143,7 +143,7 @@ function addTrackedProduct(){
 
     window.location.reload();
 }
-
+let priceChart; // Declare the variable here
 document.addEventListener('DOMContentLoaded', (event) => {
     const table = document.getElementById('data-table');
     const productModal = document.getElementById('productModal');
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const modalUrl = document.getElementById('modalUrl');
     const modalPrice = document.getElementById('modalPrice');
     const priceHistoryChart = document.getElementById('priceHistoryChart');
-    let priceChart; // Declare the variable here
+    
 
     // Add event listener to the table
     table.addEventListener('click', (event) => {
@@ -201,3 +201,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
             });
     });
 });
+
+
+// Function to close the modal
+function closeModal() {
+    priceChart.destroy();
+    document.getElementById('productModal').style.display = 'none';
+}
