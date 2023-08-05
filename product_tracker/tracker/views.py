@@ -52,10 +52,10 @@ def results(request):
                     'priceHistory': []
                 }
 
-                product_dict[url]['priceHistory'].append({
-                    'price': result.price,
-                    'date': result.created_at
-                })
+            product_dict[url]['priceHistory'].append({
+                'price': result.price,
+                'date': result.created_at
+            })
 
         formatted_results = list(product_dict.values())
         
@@ -172,27 +172,31 @@ def update_tracked_products(request):
 
 def get_product_results(request):
     product_name = request.GET.get('name')
-    result = ProductResult.objects.get(name=product_name)
+    results = ProductResult.objects.filter(name=product_name).order_by('-created_at')
 
     product_dict = {}
 
-    url = result.url
-    if url not in product_dict:
-        product_dict[url] = {
-            'name': result.name,
-            'url': result.url,
-            'img': result.img,
-            'price': result.price,
-            'source': result.source,
-            'created_at': result.created_at,
-            'priceHistory': []
-        }
+    for result in results: 
+        name = result.name
+        if name not in product_dict:
+            product_dict[name] = {
+                'name': result.name,
+                'url': result.url,
+                'img': result.img,
+                'price': result.price,
+                'source': result.source,
+                'created_at': result.created_at,
+                'priceHistory': []
+            }
 
-        product_dict[url]['priceHistory'].append({
+        product_dict[name]['priceHistory'].append({
             'price': result.price,
             'date': result.created_at
         })
 
     formatted_results = list(product_dict.values())
+
+    if len(formatted_results) < 1:
+        return JsonResponse({"message": "no product with that name"}, safe=False)
         
     return JsonResponse (formatted_results[0], safe=False)
