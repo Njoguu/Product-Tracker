@@ -65,6 +65,8 @@ async function fetchDataAndPopulateTable(searchText){
     // Loop through the data and create table rows
     data.forEach(product => {
         const row = document.createElement('tr');
+        row.classList.add("clickable-row");
+        row.setAttribute("data-href", product.name);
         // Create a new Date object from the datetime string
         const dateTime = new Date(product.created_at);
 
@@ -113,9 +115,89 @@ function searchProducts() {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
-    })
-    .then((response) => response.json())
-    .then((json) => console.log(json));
+    });
 }
 
-// Call the function to enable the search functionality
+// Add tracked product
+function addTrackedProduct(){
+    const addTrackedProduct = document.getElementById('addTrackedProduct');
+    const productName = addTrackedProduct.value;
+
+    if (productName.trim() === '') {
+        // If the search box is empty, do nothing
+        return;
+    }
+
+    const data = {
+        name: productName
+    };
+
+    // Send the data as a parameter in a POST request
+    fetch('add-tracked-product/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    });
+
+    window.location.reload();
+}
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    const table = document.getElementById('data-table');
+    const productModal = document.getElementById('productModal');
+    const productModalName = document.getElementById('productModalName');
+    const modalImage = document.getElementById('modalImage');
+    const modalUrl = document.getElementById('modalUrl');
+    const modalPrice = document.getElementById('modalPrice');
+    const priceHistoryChart = document.getElementById('priceHistoryChart');
+    let priceChart; // Declare the variable here
+
+    // Add event listener to the table
+    table.addEventListener('click', (event) => {
+        const clickedRow = event.target.closest('tr');
+        if (!clickedRow || !clickedRow.classList.contains('clickable-row')) return; // Make sure a clickable row was clicked
+
+        const productName = clickedRow.dataset.href;
+        console.log(`Selected Product Name: ${productName}`);
+
+        fetch(`/product?name=${productName}`)
+            .then(response => response.json())
+            .then(data => {
+                // Update the modal content with the fetched data
+                productModalName.textContent = data.name;
+                modalImage.src = data.img;
+                modalUrl.textContent = `Product Url: ${data.url}`;
+                modalPrice.textContent = `Current price: ${data.price}`;
+
+                // Optionally, create and update the price history chart using Chart.js
+                // For example:
+                const priceHistory = data.priceHistory;
+                const dates = priceHistory.map(entry => entry.date);
+                const prices = priceHistory.map(entry => entry.price);
+
+                priceChart = new Chart(priceHistoryChart, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Price History',
+                            data: prices,
+                            borderColor: 'blue',
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true
+                    }
+                });
+
+                // Show the modal
+                productModal.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error fetching product details:', error);
+            });
+    });
+});

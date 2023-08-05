@@ -5,6 +5,7 @@ from .models  import *
 import json
 import subprocess
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 def index(request):
@@ -167,4 +168,31 @@ def update_tracked_products(request):
         response = {"message":"Scrapers started successfully", "products":product_names}
 
         return JsonResponse(response, status=200)
-    
+
+
+def get_product_results(request):
+    product_name = request.GET.get('name')
+    result = ProductResult.objects.get(name=product_name)
+
+    product_dict = {}
+
+    url = result.url
+    if url not in product_dict:
+        product_dict[url] = {
+            'name': result.name,
+            'url': result.url,
+            'img': result.img,
+            'price': result.price,
+            'source': result.source,
+            'created_at': result.created_at,
+            'priceHistory': []
+        }
+
+        product_dict[url]['priceHistory'].append({
+            'price': result.price,
+            'date': result.created_at
+        })
+
+    formatted_results = list(product_dict.values())
+        
+    return JsonResponse (formatted_results[0], safe=False)

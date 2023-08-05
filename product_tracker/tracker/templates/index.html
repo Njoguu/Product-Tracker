@@ -7,6 +7,8 @@
     <title>Tracker</title>
     <script src="{% static 'js/scripts.js' %}"></script>
 
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
     <style>  
         table{  
             border-collapse: collapse;  
@@ -15,8 +17,10 @@
         th,td{  
             border: 2px solid black;   
             padding: 15px;  
-        }  
-               
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }                 
     </style>  
 
 </head>
@@ -46,7 +50,7 @@
     <h2>Add Tracked Product</h2>
     <div class="addProductSearch">
         <input type="search" name="addTrackedProduct" id="addTrackedProduct">
-        <button type="button">Add</button>
+        <button type="button" onclick="addTrackedProduct()">Add</button>
     </div>
 
     <h2>Price History</h2>
@@ -63,5 +67,20 @@
 
         </tbody> 
     </table>  
+
+    <!-- Modal container to display product details -->
+    <div id="productModal" class="modal">  
+        <div class="modal-content">
+            <!-- Add the elements to display product details here -->
+            <h3 id="productModalName"></h3>
+            <img id="modalImage" src="" alt="Product Image">
+            <p id="modalUrl"></p>
+            <p id="modalPrice"></p>
+            <canvas id="priceHistoryChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
 </body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </html>
