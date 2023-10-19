@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         const productName = clickedRow.dataset.href;
         console.log(`Selected Product Name: ${productName}`);
 
-        fetch(`/product?name=${productName}`)
+        fetch(`/product/${productName}`)
             .then(response => response.json())
             .then(data => {
                 // Update the modal content with the fetched data

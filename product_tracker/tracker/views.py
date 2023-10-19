@@ -170,9 +170,9 @@ def update_tracked_products(request):
         return JsonResponse(response, status=200)
 
 
-def get_product_results(request):
-    product_name = request.GET.get('name')
-    results = ProductResult.objects.filter(name=product_name).order_by('-created_at')
+def get_product_results(request, name):
+    # product_name = name
+    results = ProductResult.objects.filter(name=name).order_by('-created_at')
 
     product_dict = {}
 
