@@ -5,7 +5,7 @@ from .models  import *
 import json
 import subprocess
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator, EmptyPage
 
 # Create your views here.
 def index(request):
@@ -32,12 +32,15 @@ def results(request):
         response = {"message": "Received Data Successfully"}
         return JsonResponse(response, status=200)
     
-    elif request.method == "GET":
+    elif request.method == "GET":  
+        page_number = request.GET.get('page', 1)  # Get the requested page number, default to 1 if not provided
+        results_per_page = request.GET.get('results_per_page', 10)  # Set the number of results per page
         search_text = request.GET.get('search_text', '')
+
         results = ProductResult.objects.filter(search_text=search_text).order_by('-created_at')
 
         if not results.exists():
-            return JsonResponse({'messagae': "No results found for the specified search_text"}, status=404) 
+            return JsonResponse({'message': "no results found for the specified search_text"}, status=404) 
 
         product_dict = {}
         for result in results:
@@ -55,28 +58,79 @@ def results(request):
             product_dict[url]['priceHistory'].append({
                 'price': result.price,
                 'date': result.created_at
-            })
+            })  
 
         formatted_results = list(product_dict.values())
-        
 
-        return JsonResponse (formatted_results, safe=False)
-    
-        # response = {"message": "Invalid Request"}
-        # return JsonResponse(response, status=400)
+        # Paginate the results
+        paginator = Paginator(formatted_results, int(results_per_page))
+
+        try:
+            paginated_results = paginator.page(page_number)
+        except EmptyPage as err:
+            return JsonResponse({'error': f'{err}'}, status=400)
+
+        serialized_results = []
+        for result in paginated_results:
+            serialized_results.append(result)
+
+        context = {
+            "results": serialized_results,
+            'meta': {
+                'total_pages': paginator.num_pages,
+                'total_results': paginator.count,
+                'current_page': paginated_results.number,
+            }
+        }
+
+        return JsonResponse(context, safe=False)
 
 def get_unique_search_texts(request):
     if request.method == "GET":
-        unique_search_texts = ProductResult.objects.values("search_text").distinct()
-        unique_search_texts =[text['search_text'] for text in unique_search_texts]
+        page_number = request.GET.get('page', 1)  # Get the requested page number, default to 1 if not provided
+        results_per_page = request.GET.get('results_per_page', 5)  # Set the number of results per page
 
-        return JsonResponse({'search_text': unique_search_texts}, safe=False)
+        unique_search_texts = ProductResult.objects.values("search_text").distinct()
+
+        # Paginate the results
+        paginator = Paginator(unique_search_texts, int(results_per_page))
+
+        try:
+            paginated_results = paginator.page(page_number)
+        except EmptyPage as err:
+            return JsonResponse({'error': f'{err}'}, status=400)
+
+        serialized_data =[text['search_text'] for text in paginated_results]
+
+        context = {
+            "search_texts": serialized_data,
+            'meta': {
+                'total_pages': paginator.num_pages,
+                'total_results': paginator.count,
+                'current_page': paginated_results.number,
+            }
+        }
+
+        return JsonResponse(context, safe=False)
         
 def get_results(request):
+    page_number = request.GET.get('page', 1)  # Get the requested page number, default to 1 if not provided
+    results_per_page = request.GET.get('results_per_page', 10)  # Set the number of results per page
+
     results = ProductResult.objects.all()
-    product_results = []
-    for result in results:
-        product_results.append({
+
+    # Paginate the results
+    paginator = Paginator(results, results_per_page)
+
+    try:
+        paginated_results = paginator.page(page_number)
+    except EmptyPage:
+        return JsonResponse({'error': 'Invalid page number'}, status=400)
+
+    serialized_results = []
+
+    for result in paginated_results:
+        serialized_results.append({
             'name': result.name,
             'url': result.url,
             'price': result.price,
@@ -87,7 +141,16 @@ def get_results(request):
             'source': result.source 
         })
 
-    return JsonResponse(product_results, safe=False)
+    context = {
+        "results": serialized_results,
+        'meta': {
+            'total_pages': paginator.num_pages,
+            'total_results': paginator.count,
+            'current_page': paginated_results.number,
+        }
+    }
+
+    return JsonResponse(context, safe=False)
 
 @csrf_exempt
 def start_scraper(request):
@@ -134,18 +197,38 @@ def toggle_tracked_product(request, product_id):
         return JsonResponse(response, status=204)
     
 def get_tracked_products(request):
+    page_number = request.GET.get('page', 1)  # Get the requested page number, default to 1 if not provided
+    results_per_page = request.GET.get('results_per_page', 5)  # Set the number of results per page
+    
     tracked_products = TrackedProducts.objects.all()
+    
+    paginator = Paginator(tracked_products, int(results_per_page))
 
-    results = []
-    for product in tracked_products:
-        results.append({
+    try:
+        paginated_results = paginator.page(page_number)
+    except EmptyPage as err:
+        return JsonResponse({'error': f'{err}'}, status=400)
+    
+    serialized_results = []
+
+    for product in paginated_results:
+        serialized_results.append({
             "id": product.id,
             "name": product.name,
             "created_at": product.created_at,
             "tracked": product.tracked
         })
 
-    return JsonResponse({'products': results}, safe=False)
+    context = {
+        "results": serialized_results,
+        'meta': {
+            'total_pages': paginator.num_pages,
+            'total_results': paginator.count,
+            'current_page': paginated_results.number,
+        }
+    }
+
+    return JsonResponse(context, safe=False)
 
 @csrf_exempt
 def update_tracked_products(request):
