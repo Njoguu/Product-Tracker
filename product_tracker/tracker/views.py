@@ -7,9 +7,6 @@ import subprocess
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator, EmptyPage
 
-# Create your views here.
-def index(request):
-    return render(request,"index.html")
 
 @csrf_exempt
 def results(request):
@@ -160,7 +157,7 @@ def start_scraper(request):
         search_text = data.get('search_text')
 
         # TODO: Add run scraper separately
-        command = f"python ../web-scraper/__init__.py {url} \"{search_text}\" /results"
+        command = f"python ./web-scraper/__init__.py {url} \"{search_text}\" /results"
         subprocess.Popen(command, shell=True)
 
         response = {"mesage": "scraper started successfully"}

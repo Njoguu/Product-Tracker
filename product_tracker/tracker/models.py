@@ -3,7 +3,7 @@ from django.utils.timezone import now
 
 # Create your models here.
 class ProductResult(models.Model):
-    id = models.IntegerField(primary_key=True)
+    # id = models.IntegerField(primary_key=True)  
     name = models.CharField(max_length=1000)
     img = models.CharField(max_length=1000)
     url = models.CharField(max_length=1000)
@@ -17,7 +17,7 @@ class ProductResult(models.Model):
     
 
 class TrackedProducts(models.Model):
-    id = models.IntegerField(primary_key=True)
+    # id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=1000, unique=True)
     created_at = models.DateTimeField(default=now)
     tracked = models.BooleanField(default=True)
