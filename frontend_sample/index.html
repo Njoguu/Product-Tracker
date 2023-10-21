@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker</title>
+
+    <script src="js/scripts.js"></script>
+    
+    <link rel="stylesheet" href="css/main.css">
+
+    <style>  
+        table{  
+            border-collapse: collapse;  
+            width: 100%;   
+        }  
+        th,td{  
+            border: 2px solid black;   
+            padding: 15px;  
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }                 
+    </style>  
+
+</head>
+<body>
+    <h1>Product Tracker</h3>
+    <div class="searchBox">
+        <label for="searchBar">Search for product:</label>
+        <input type="search" name="searchBar" id="searchBar">
+        <button type="button" onclick="searchProducts()" id="searchProductButton">Search</button>
+    </div>
+
+    <h2>All Searched Products</h2>
+    <div id="searchTextContainer">
+        <script>
+            fetchSearchTexts();
+        </script>
+    </div>
+
+    <h2>Tracked Products</h2>
+    <div id="trackedProductsContainer">
+        <script>
+            fetchTrackedProducts();
+        </script>
+    </div>
+
+
+    <h2>Add Tracked Product</h2>
+    <div class="addProductSearch">
+        <input type="search" name="addTrackedProduct" id="addTrackedProduct">
+        <button type="button" onclick="addTrackedProduct()">Add</button>
+    </div>
+
+    <h2>Price History</h2>
+    <table id="data-table">  
+        <thead>
+            <tr>  
+                <th>Updated At</th>  
+                <th>Name</th>  
+                <th>Price</th>  
+                <th>Price Change</th>
+            </tr> 
+        </thead>
+        <tbody>
+
+        </tbody> 
+    </table>  
+
+    <!-- Modal container to display product details -->
+    <div id="productModal" class="modal">  
+        <div class="modal-content">
+            <!-- Add the elements to display product details here -->
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="productModalName"></h3>
+            <img id="modalImage" src="" alt="Product Image">
+            <p id="modalUrl"></p>
+            <p id="modalPrice"></p>
+            <canvas id="priceHistoryChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+</body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</html>
