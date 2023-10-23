@@ -31,7 +31,7 @@ def results(request):
     
     elif request.method == "GET":  
         page_number = request.GET.get('page', 1)  # Get the requested page number, default to 1 if not provided
-        results_per_page = request.GET.get('results_per_page', 10)  # Set the number of results per page
+        results_per_page = request.GET.get('per_page', 10)  # Set the number of results per page
         search_text = request.GET.get('search_text', '')
 
         results = ProductResult.objects.filter(search_text=search_text).order_by('-created_at')
@@ -85,7 +85,7 @@ def results(request):
 def get_unique_search_texts(request):
     if request.method == "GET":
         page_number = request.GET.get('page', 1)  # Get the requested page number, default to 1 if not provided
-        results_per_page = request.GET.get('results_per_page', 5)  # Set the number of results per page
+        results_per_page = request.GET.get('per_page', 5)  # Set the number of results per page
 
         unique_search_texts = ProductResult.objects.values("search_text").distinct()
 
@@ -112,7 +112,7 @@ def get_unique_search_texts(request):
         
 def get_results(request):
     page_number = request.GET.get('page', 1)  # Get the requested page number, default to 1 if not provided
-    results_per_page = request.GET.get('results_per_page', 10)  # Set the number of results per page
+    results_per_page = request.GET.get('per_page', 10)  # Set the number of results per page
 
     results = ProductResult.objects.all()
 
@@ -195,7 +195,7 @@ def toggle_tracked_product(request, product_id):
     
 def get_tracked_products(request):
     page_number = request.GET.get('page', 1)  # Get the requested page number, default to 1 if not provided
-    results_per_page = request.GET.get('results_per_page', 5)  # Set the number of results per page
+    results_per_page = request.GET.get('per_page', 5)  # Set the number of results per page
     
     tracked_products = TrackedProducts.objects.all()
     
